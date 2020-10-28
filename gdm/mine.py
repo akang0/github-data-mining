@@ -35,8 +35,11 @@ for repo in org.get_repos():
     # get all the prs under the repo and upsert to the db.repos.pulls
     for pr in repo.get_pulls(state="all"):
         pr_json = {"repo_name": repo.name, "name": pr.title, "state": pr.state, "created_at": pr.created_at.strftime("%Y-%m-%d")}
+
         if pr.closed_at is not None:
             pr_json["closed_at"] = pr.closed_at.strftime("%Y-%m-%d")
+            pr_json["days_to_close"] = (pr.closed_at - pr.created_at).days
+
         pr_json_set = {"$set": pr_json}
         print("upserting... ", pr_json)
         db["repos.pulls"].update_one({"repo_name": repo.name, "name": pr.title}, pr_json_set, upsert=True)
