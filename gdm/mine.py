@@ -16,9 +16,10 @@ print("github-api-key: *************")
 client = MongoClient()
 db = client[args.database]
 
-# create repos, prs, collection
+# create repos, pulls, and issues collections
 repos_col = db["repos"]
 repos_pulls_col = db["repos_pulls"]
+repos_issues_col = db["repos_issues"]
 
 # connect to github
 g = Github(args.github_api_key)
@@ -27,13 +28,16 @@ g = Github(args.github_api_key)
 org = g.get_organization(args.organization)
 for repo in org.get_repos():
     repo_json = {
-        "name": repo.name,
         "id": repo.id,
+        "name": repo.name,
         "organization": repo.organization.name,
     }
     repo_json_set = {"$set": repo_json}
     print("upserting... ", repo_json)
-    db["repos"].update_one(repo_json, repo_json_set, upsert=True)
+    db["repos"].update_one(
+        {"id": repo.id},
+        repo_json_set,
+        upsert=True)
     print("done upsert: ", repo_json)
 
     # get all the prs under the repo and upsert to the db.repos_pulls
@@ -41,7 +45,8 @@ for repo in org.get_repos():
         pr_json = {
             "repo_id": repo.id,
             "repo_name": repo.name,
-            "name": pr.title,
+            "id": pr.id,
+            "title": pr.title,
             "state": pr.state,
             "created_at": pr.created_at.strftime("%Y-%m-%d"),
         }
@@ -53,8 +58,34 @@ for repo in org.get_repos():
         pr_json_set = {"$set": pr_json}
         print("upserting... ", pr_json)
         db["repos_pulls"].update_one(
-            {"repo_name": repo.name, "repo_id": repo.id, "name": pr.title},
+            {"id": pr.id},
             pr_json_set,
             upsert=True,
         )
         print("done upsert: ", pr_json)
+
+    # get all the issues under the repo and upsert to the db.repos_issues
+    for issue in repo.get_issues(state="all"):
+        issue_json = {
+            "repo_id": repo.id,
+            "repo_name": repo.name,
+            "id": issue.id,
+            "number": issue.number,
+            "title": issue.title,
+            "body": issue.body,
+            "state": issue.state,
+            "created_at": issue.created_at.strftime("%Y-%m-%d"),
+        }
+
+        if issue.closed_at is not None:
+            issue_json["closed_at"] = issue.closed_at.strftime("%Y-%m-%d")
+            issue_json["days_to_close"] = (issue.closed_at - issue.created_at).days
+
+        issue_set = {"$set": issue_json}
+        print("upserting... ", issue_json)
+        db["repos_issues"].update_one(
+            {"id": issue.id},
+            issue_set,
+            upsert=True,
+        )
+        print("done upsert: ", issue_json)
