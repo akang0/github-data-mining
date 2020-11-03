@@ -20,6 +20,9 @@ if args.collections == "repos":
 elif args.collections == "repos_pulls":
     for pull in db.repos_pulls.find():
         print(pull)
+elif args.collections == "repos_issues":
+    for issue in db.repos_issues.find():
+        print(issue)
 else:
     print("no such collection in db: ", args.collections)
     exit(1)
