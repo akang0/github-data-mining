@@ -32,12 +32,15 @@ for repo in org.get_repos():
         "name": repo.name,
         "organization": repo.organization.name,
     }
+    if repo.private:
+        repo_json["type"] = "private"
+    else:
+        repo_json["type"] = "public"
+    print(repo_json)
+
     repo_json_set = {"$set": repo_json}
     print("upserting... ", repo_json)
-    db["repos"].update_one(
-        {"id": repo.id},
-        repo_json_set,
-        upsert=True)
+    db["repos"].update_one({"id": repo.id}, repo_json_set, upsert=True)
     print("done upsert: ", repo_json)
 
     # get all the prs under the repo and upsert to the db.repos_pulls
