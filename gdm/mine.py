@@ -36,7 +36,6 @@ for repo in org.get_repos():
         repo_json["type"] = "private"
     else:
         repo_json["type"] = "public"
-    print(repo_json)
 
     repo_json_set = {"$set": repo_json}
     print("upserting... ", repo_json)
