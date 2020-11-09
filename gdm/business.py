@@ -11,17 +11,33 @@ print("database:", args.database)
 client = MongoClient()
 db = client[args.database]
 
-# calculates the average age of pull requests
-averageDays = list(
+# calculates the average days to close for pull requests per repo
+avgDaysToClose = list(
     db.repos_pulls.aggregate(
-        [{"$group": {"_id": "$repo_id", "avgAge": {"$avg": "$days_to_close"}}}]
+        [{"$group": {"_id": "$repoId", "avgDaysToClose": {"$avg": "$daysToClose"}}}]
     )
 )
 
 for repo in db["repos"].find():
-    for averageDay in averageDays:
+    for averageDay in avgDaysToClose:
         if averageDay["_id"] == repo["id"]:
-            repo_json = {"avgPullAge": averageDay["avgAge"]}
+            repo_json = {"avgPullDaysToClose": averageDay["avgDaysToClose"]}
+            pr_repo_set = {"$set": repo_json}
+            print("upserting... ", repo_json)
+            db["repos"].update_one({"id": repo["id"]}, pr_repo_set, upsert=True)
+            print("done upsert: ", repo_json)
+
+# calculates the average age for pull requests per repo
+avgAge = list(
+    db.repos_pulls.aggregate(
+        [{"$group": {"_id": "$repoId", "avgAge": {"$avg": "$age"}}}]
+    )
+)
+
+for repo in db["repos"].find():
+    for aAge in avgAge:
+        if aAge["_id"] == repo["id"]:
+            repo_json = {"avgAge": aAge["avgAge"]}
             pr_repo_set = {"$set": repo_json}
             print("upserting... ", repo_json)
             db["repos"].update_one({"id": repo["id"]}, pr_repo_set, upsert=True)
