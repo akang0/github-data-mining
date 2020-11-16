@@ -57,10 +57,16 @@ for repo in org.get_repos():
         }
 
         if pr.closed_at is None:
-            pr_json["age"] = (today - pr.created_at).days
+            age = (today - pr.created_at).days
+            if age < 0:
+                age = 0
+            pr_json["age"] = age
         else:
             pr_json["closedAt"] = pr.closed_at.strftime("%Y-%m-%d")
-            pr_json["daysToClose"] = (pr.closed_at - pr.created_at).days
+            daysToClose = (pr.closed_at - pr.created_at).days
+            if daysToClose < 0:
+                daysToClose = 0
+            pr_json["daysToClose"] = daysToClose
             pr_json["age"] = pr_json["daysToClose"]
 
         pr_json_set = {"$set": pr_json}
