@@ -1,0 +1,9 @@
+[Unit]
+Description=Periodical syncing of dashboard data status every hour
+
+[Timer]
+OnBootSec=60min
+OnUnitActiveSec=60min
+
+[Install]
+WantedBy=syncdata.service
