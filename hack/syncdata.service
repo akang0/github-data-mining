@@ -1,0 +1,8 @@
+[Unit]
+Description=Sync data from github
+
+[Service]
+Type=oneshot
+ExecStart=/root/application/syncdata.sh
+User=root
+Group=systemd-journal
